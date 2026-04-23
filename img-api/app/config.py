@@ -13,7 +13,7 @@ class Settings(BaseSettings):
 
 _settings = None
 
-def get_settings():
+def get_settings() -> Settings:
     global _settings
     if _settings is None:
         settings = Settings()
