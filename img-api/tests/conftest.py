@@ -1,8 +1,15 @@
 import os
+
+import boto3
 import pytest
-from models import BaseModel
+from fastapi.testclient import TestClient
+from moto import mock_aws
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
+
+from app import app
+from db import get_db
+from models import BaseModel
 
 os.environ.setdefault("DATABASE_URL", "postgresql://postgres:postgres@localhost:5432/test")
 os.environ.setdefault("AWS_ACCESS_KEY_ID", "test")
@@ -33,3 +40,21 @@ def db(test_db_engine):
     yield session
     session.close()
 
+@pytest.fixture()
+def s3():
+    with mock_aws():
+        client = boto3.client("s3", region_name=-"eu-east-1")
+        client.create_bucket(Bucket="test-bucket")
+        yield client
+
+@pytest.fixture()
+def client(db, s3):
+    def override_get_db():
+        yield db
+
+    app.dependency_overrides[get_db] = override_get_db
+    with TestClient(app) as test_client:
+        yield test_client
+    app.dependency_overrides.clear()
+
+from fixtures import *
