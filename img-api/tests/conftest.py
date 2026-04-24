@@ -1,5 +1,11 @@
 import os
 
+os.environ.setdefault("DB_URL", "postgresql://postgres:postgres@localhost:5432/test")
+os.environ.setdefault("AWS_ACCESS_KEY_ID", "test")
+os.environ.setdefault("AWS_SECRET_ACCESS_KEY", "test")
+os.environ.setdefault("AWS_REGION", "eu-east-1")
+os.environ.setdefault("S3_BUCKET_NAME", "test-bucket")
+
 import boto3
 import pytest
 from fastapi.testclient import TestClient
@@ -10,12 +16,6 @@ from sqlalchemy.orm import sessionmaker
 from app import app
 from db import get_db
 from models import BaseModel
-
-os.environ.setdefault("DB_URL", "postgresql://postgres:postgres@localhost:5432/test")
-os.environ.setdefault("AWS_ACCESS_KEY_ID", "test")
-os.environ.setdefault("AWS_SECRET_ACCESS_KEY", "test")
-os.environ.setdefault("AWS_REGION", "eu-east-1")
-os.environ.setdefault("S3_BUCKET_NAME", "test-bucket")
 
 TEST_DB_URL = os.environ["DB_URL"]
 
