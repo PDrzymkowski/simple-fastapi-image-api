@@ -1,3 +1,4 @@
+import logging
 import uuid
 
 from fastapi import APIRouter, File, Form, UploadFile, Depends, HTTPException
@@ -6,6 +7,7 @@ from sqlalchemy.orm.session import Session
 from db import get_db
 from models import Image
 from schemas import ImageResponse
+from services import upload_image_to_s3
 
 router = APIRouter(prefix="/images", tags=["images"])
 SUPPORTED_FORMATS_MAP = {
@@ -14,6 +16,8 @@ SUPPORTED_FORMATS_MAP = {
     "image/webp": "webp",
     "image/gif": "gif",
 }
+
+logger = logging.getLogger(__name__)
 
 
 @router.post("/upload", status_code=201, response_model=ImageResponse)
@@ -33,7 +37,12 @@ def upload_image(
     data = file.file.read()
     file_key = f"images/{uuid.uuid4()}.{extension}"
 
-    url = "mock"  # TODO upload img to AWS
+    try:
+        url = upload_image_to_s3(data=data, key=file_key, content_type=content_type)
+    except Exception as e:
+        logger.error(f"Failed to upload file to S3: {e}")
+        raise HTTPException(status_code=503, detail="Failed to upload file to S3")
+
     image = Image(title=title, key=file_key, url=url, width=width, height=height)
     db.add(image)
     db.commit()
