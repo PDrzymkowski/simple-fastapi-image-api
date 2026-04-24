@@ -4,14 +4,18 @@ from PIL import Image as PilImage
 
 __all__ = ["make_image_file", "sample_image"]
 
-def make_image_file(width: int = 100, height: int = 100) -> io.BytesIO:
-    buf = io.BytesIO()
-    PilImage.new("RGB", (width, height), color="red").save(buf, format="JPEG")
-    buf.seek(0)
-    return buf
+@pytest.fixture()
+def make_image_file():
+    def _make_image_file(width: int = 100, height: int = 100) -> io.BytesIO:
+        buf = io.BytesIO()
+        PilImage.new("RGB", (width, height), color="red").save(buf, format="JPEG")
+        buf.seek(0)
+        return buf
+
+    yield _make_image_file
 
 @pytest.fixture
-def sample_image(client):
+def sample_image(client, make_image_file):
     response = client.post(
         "/images",
         data={"title": "Sample Image", "width": "50", "height": "50"},
