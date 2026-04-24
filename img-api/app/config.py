@@ -14,10 +14,4 @@ class Settings(BaseSettings):
     def s3_url(self):
         return f"https://{self.s3_bucket_name}.s3.{self.aws_region}.amazonaws.com"
 
-_settings = None
-
-def get_settings() -> Settings:
-    global _settings
-    if _settings is None:
-        _settings = Settings()
-    return _settings
+settings = Settings()
