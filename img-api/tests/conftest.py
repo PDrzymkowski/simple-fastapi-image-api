@@ -57,4 +57,4 @@ def client(db, s3):
         yield test_client
     app.dependency_overrides.clear()
 
-from fixtures import *
+from .fixtures import *  # noqa
