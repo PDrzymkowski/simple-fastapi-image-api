@@ -17,7 +17,7 @@ def make_image_file():
 @pytest.fixture
 def sample_image(client, make_image_file):
     response = client.post(
-        "/images",
+        "/images/upload",
         data={"title": "Sample Image", "width": "50", "height": "50"},
         files={"file": ("sample.jpg", make_image_file(), "image/jpeg")},
     )

@@ -1,12 +1,12 @@
 import logging
 import uuid
 
-from fastapi import APIRouter, File, Form, UploadFile, Depends, HTTPException
+from fastapi import APIRouter, File, Form, UploadFile, Depends, HTTPException, Query
 from sqlalchemy.orm.session import Session
 
 from db import get_db
 from models import Image
-from schemas import ImageResponse
+from schemas import ImageResponse, ImageListResponse
 from services import upload_image_to_s3
 
 router = APIRouter(prefix="/images", tags=["images"])
@@ -42,9 +42,34 @@ def upload_image(
     except Exception as e:
         logger.error(f"Failed to upload file to S3: {e}")
         raise HTTPException(status_code=503, detail="Failed to upload file to S3")
+    else:
+        image = Image(title=title, key=file_key, url=url, width=width, height=height)
+        db.add(image)
+        db.commit()
+        db.refresh(image)
+        return image
 
-    image = Image(title=title, key=file_key, url=url, width=width, height=height)
-    db.add(image)
-    db.commit()
-    db.refresh(image)
-    return image
+@router.get("/{image_id}", response_model=ImageResponse)
+def get_image(image_id: uuid.UUID, db: Session = Depends(get_db)):
+    image = db.get(Image, image_id)
+    if not image:
+        raise HTTPException(status_code=404, detail=f"Image {image_id} not found")
+    else:
+        return image
+
+
+@router.get("", response_model=ImageListResponse)
+def list_images(    page: int = Query(1, ge=1),
+    size: int = Query(20, ge=1, le=100),
+    db: Session = Depends(get_db),):
+    query = db.query(Image)
+
+    total = query.count()
+    offset = (page - 1) * size
+    items = query.offset(offset).limit(size).all()
+    return {
+        "items": items,
+        "total": total,
+        "page": page,
+        "size": size,
+    }
