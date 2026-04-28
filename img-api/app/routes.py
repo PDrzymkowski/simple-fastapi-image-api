@@ -24,11 +24,11 @@ logger = logging.getLogger(__name__)
 
 @router.post("/upload", status_code=201, response_model=ImageResponse)
 def upload_image(
-        file: UploadFile = File(...),
-        title: str = Form(...),
-        width: int = Form(..., gt=0),
-        height: int = Form(..., gt=0),
-        db: Session = Depends(get_db),
+    file: UploadFile = File(...),
+    title: str = Form(...),
+    width: int = Form(..., gt=0),
+    height: int = Form(..., gt=0),
+    db: Session = Depends(get_db),
 ):
     content_type = file.content_type
     try:
@@ -39,17 +39,16 @@ def upload_image(
     data = file.file.read()
     try:
         resized_data, actual_w, actual_h = resize_image(
-            data=data,
-            width=width,
-            height=height,
-            img_format=extension.upper()
+            data=data, width=width, height=height, img_format=extension.upper()
         )
     except UnidentifiedImageError:
         raise HTTPException(status_code=400, detail="Invalid image data")
     file_key = f"images/{uuid.uuid4()}.{extension}"
 
     try:
-        url = upload_image_to_s3(data=resized_data, key=file_key, content_type=content_type)
+        url = upload_image_to_s3(
+            data=resized_data, key=file_key, content_type=content_type
+        )
     except Exception as e:
         logger.error(f"Failed to upload file to S3: {e}")
         raise HTTPException(status_code=503, detail="Failed to upload file to S3")
@@ -59,6 +58,7 @@ def upload_image(
         db.commit()
         db.refresh(image)
         return image
+
 
 @router.get("/{image_id}", response_model=ImageResponse)
 def get_image(image_id: uuid.UUID, db: Session = Depends(get_db)):
@@ -70,11 +70,15 @@ def get_image(image_id: uuid.UUID, db: Session = Depends(get_db)):
 
 
 @router.get("", response_model=ImageListResponse)
-def list_images(    page: int = Query(1, ge=1),
+def list_images(
+    title: str | None = None,
+    page: int = Query(1, ge=1),
     size: int = Query(20, ge=1, le=100),
-    db: Session = Depends(get_db),):
+    db: Session = Depends(get_db),
+):
     query = db.query(Image)
-
+    if title is not None:
+        query = query.filter(Image.title.ilike(f"%{title}%"))
     total = query.count()
     offset = (page - 1) * size
     items = query.offset(offset).limit(size).all()

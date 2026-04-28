@@ -1,7 +1,7 @@
 
 url = '/images'
 
-def test_list_empty(client):
+def test_200__list_empty(client):
     response = client.get(url)
     assert response.status_code == 200
     body = response.json()
@@ -11,15 +11,24 @@ def test_list_empty(client):
     assert body["size"] == 20
 
 
-def test_list_returns_image(client, sample_image):
+def test_200__returns_image(client, sample_image):
     response = client.get(url)
     assert response.status_code == 200
     body = response.json()
     assert body["total"] == 1
     assert body["items"][0]["id"] == sample_image["id"]
 
+def test_200__title_filter__match(client, sample_image):
+    response = client.get("/images?title=Sample")
+    assert response.status_code == 200
+    assert response.json()["total"] == 1
 
-def test_list_pagination(client, make_image_file):
+def test_200__title_filter__no_match(client, sample_image):
+    response = client.get("/images?title=xyz_no_match")
+    assert response.status_code == 200
+    assert response.json()["total"] == 0
+
+def test200__pagination(client, make_image_file):
     # Upload 3 images
     for i in range(3):
         client.post(
