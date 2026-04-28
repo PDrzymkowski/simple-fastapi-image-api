@@ -7,7 +7,7 @@ def test_400__upload_unsupported_format(client):
     assert response.status_code == 400
 
 
-def test_400__invalid_image_data(client):
+def test_400__unsupported_format(client):
     response = client.post(
         "/images/upload",
         data={"title": "Corrupt", "width": "50", "height": "50"},
