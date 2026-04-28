@@ -7,13 +7,31 @@ def test_400__upload_unsupported_format(client):
     assert response.status_code == 400
 
 
-def test_400__unsupported_format(client):
+def test_invalid_image_data__400(client):
     response = client.post(
         "/images/upload",
         data={"title": "Corrupt", "width": "50", "height": "50"},
-        files={"file": ("corrupt.csv", b"not-image-bytes", "text/csv")},
+        files={"file": ("corrupt.jpg", b"not-image-bytes", "image/jpeg")},
     )
     assert response.status_code == 400
+
+
+def test_422__upload_missing_title(client, make_image_file):
+    response = client.post(
+        "/images/upload",
+        data={"width": "50", "height": "50"},
+        files={"file": ("photo.jpg", make_image_file(), "image/jpeg")},
+    )
+    assert response.status_code == 422
+
+
+def test_422__upload_missing_dimensions(client, make_image_file):
+    response = client.post(
+        "/images/upload",
+        data={"title": "No dims"},
+        files={"file": ("photo.jpg", make_image_file(), "image/jpeg")},
+    )
+    assert response.status_code == 422
 
 
 def test_201__happy_path(client, make_image_file):
