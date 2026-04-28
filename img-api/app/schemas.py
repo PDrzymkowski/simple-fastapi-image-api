@@ -5,5 +5,5 @@ class ImageResponse(BaseModel):
     id: UUID
     title: str
     url: str
-    width: str
-    height: str
+    width: int
+    height: int

@@ -25,4 +25,4 @@ def upload_image_to_s3(data: bytes, key: str, content_type: str) -> str:
         Body=data,
         ContentType=content_type,
     )
-    return settings.s3_url + "/{key"
+    return f"{settings.s3_url}/{key}"

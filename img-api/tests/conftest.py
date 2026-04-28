@@ -3,7 +3,7 @@ import os
 os.environ.setdefault("DB_URL", "postgresql://postgres:postgres@localhost:5432/test")
 os.environ.setdefault("AWS_ACCESS_KEY_ID", "test")
 os.environ.setdefault("AWS_SECRET_ACCESS_KEY", "test")
-os.environ.setdefault("AWS_REGION", "eu-east-1")
+os.environ.setdefault("AWS_REGION", "eu-west-1")
 os.environ.setdefault("S3_BUCKET_NAME", "test-bucket")
 
 import boto3
@@ -13,7 +13,7 @@ from moto import mock_aws
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
 
-from app import app
+from app.app import app
 from db import get_db
 from models import BaseModel
 
@@ -43,8 +43,11 @@ def db(test_db_engine):
 @pytest.fixture()
 def s3():
     with mock_aws():
-        client = boto3.client("s3", region_name="eu-east-1")
-        client.create_bucket(Bucket="test-bucket")
+        client = boto3.client("s3", region_name="eu-west-1")
+        client.create_bucket(
+            Bucket="test-bucket",
+            CreateBucketConfiguration={"LocationConstraint": "eu-west-1"},
+        )
         yield client
 
 @pytest.fixture()
