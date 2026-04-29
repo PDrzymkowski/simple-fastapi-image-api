@@ -1,0 +1,8 @@
+img-api/bin
+img-api/lib
+img-api/pyvenv.cfg
+img-api/CACHEDIR.TAG
+**/__pycache__
+**/*.pyc
+**/.pytest_cache
+.env
