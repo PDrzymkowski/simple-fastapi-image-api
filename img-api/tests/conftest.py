@@ -14,8 +14,8 @@ from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
 
 from app.app import app
-from db import get_db
-from models import BaseModel
+from app.db import get_db
+from app.models import BaseModel
 
 TEST_DB_URL = os.environ["DB_URL"]
 
