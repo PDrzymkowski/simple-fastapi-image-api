@@ -4,6 +4,7 @@ from PIL import Image as PilImage
 
 __all__ = ["make_image_file", "sample_image"]
 
+
 @pytest.fixture()
 def make_image_file():
     def _make_image_file(width: int = 100, height: int = 100) -> io.BytesIO:
@@ -13,6 +14,7 @@ def make_image_file():
         return buf
 
     yield _make_image_file
+
 
 @pytest.fixture
 def sample_image(client, make_image_file):

@@ -10,6 +10,7 @@ s3 = boto3.client(
     region_name=settings.aws_region,
 )
 
+
 def upload_image_to_s3(data: bytes, key: str, content_type: str) -> str:
     """
     Uploads image to AWS S3.

@@ -4,8 +4,10 @@ from sqlalchemy import Column, String, Integer, DateTime
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import DeclarativeBase
 
+
 class BaseModel(DeclarativeBase):
     pass
+
 
 class Image(BaseModel):
     __tablename__ = "images"

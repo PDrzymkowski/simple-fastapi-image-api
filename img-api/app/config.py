@@ -14,4 +14,5 @@ class Settings(BaseSettings):
     def s3_url(self):
         return f"https://{self.s3_bucket_name}.s3.{self.aws_region}.amazonaws.com"
 
+
 settings = Settings()

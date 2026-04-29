@@ -19,12 +19,14 @@ from app.models import BaseModel
 
 TEST_DB_URL = os.environ["DB_URL"]
 
+
 @pytest.fixture(scope="session")
 def test_db_engine():
     engine = create_engine(TEST_DB_URL)
     BaseModel.metadata.create_all(engine)
     yield engine
     BaseModel.metadata.drop_all(engine)
+
 
 @pytest.fixture(autouse=True)
 def clean_tables(test_db_engine):
@@ -33,12 +35,14 @@ def clean_tables(test_db_engine):
         db_conn.execute(text("TRUNCATE TABLE images CASCADE"))
         db_conn.commit()
 
+
 @pytest.fixture()
 def db(test_db_engine):
     Session = sessionmaker(bind=test_db_engine)
     session = Session()
     yield session
     session.close()
+
 
 @pytest.fixture()
 def s3():
@@ -50,6 +54,7 @@ def s3():
         )
         yield client
 
+
 @pytest.fixture()
 def client(db, s3):
     def override_get_db():
@@ -59,5 +64,6 @@ def client(db, s3):
     with TestClient(app) as test_client:
         yield test_client
     app.dependency_overrides.clear()
+
 
 from .fixtures import *  # noqa
