@@ -4,11 +4,11 @@ import uuid
 from fastapi import APIRouter, File, Form, UploadFile, Depends, HTTPException, Query
 from sqlalchemy.orm.session import Session
 from PIL import Image as PilImage, UnidentifiedImageError
-from db import get_db
-from models import Image
-from schemas import ImageResponse, ImageListResponse
-from services import upload_image_to_s3
-from utils import resize_image
+from .db import get_db
+from .models import Image
+from .schemas import ImageResponse, ImageListResponse
+from .services import upload_image_to_s3
+from .utils import resize_image
 
 router = APIRouter(prefix="/images", tags=["images"])
 SUPPORTED_FORMATS_MAP = {
