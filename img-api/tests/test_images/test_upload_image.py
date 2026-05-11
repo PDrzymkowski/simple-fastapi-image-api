@@ -37,6 +37,43 @@ def test_422__missing_title(client, make_image_file):
     assert response.status_code == 422
 
 
+def test_422__title_too_long(client, make_image_file):
+    response = client.post(
+        "/images/upload",
+        data={"title": "a" * 256, "width": "50", "height": "50"},
+        files={"file": ("photo.jpg", make_image_file(), "image/jpeg")},
+    )
+    assert response.status_code == 422
+
+
+def test_422__width_exceeds_max(client, make_image_file):
+    response = client.post(
+        "/images/upload",
+        data={"title": "Too wide", "width": "4097", "height": "50"},
+        files={"file": ("photo.jpg", make_image_file(), "image/jpeg")},
+    )
+    assert response.status_code == 422
+
+
+def test_422__height_exceeds_max(client, make_image_file):
+    response = client.post(
+        "/images/upload",
+        data={"title": "Too tall", "width": "50", "height": "4097"},
+        files={"file": ("photo.jpg", make_image_file(), "image/jpeg")},
+    )
+    assert response.status_code == 422
+
+
+def test_413__file_too_large(client):
+    big_data = b"x" * (10 * 1024 * 1024 + 1)
+    response = client.post(
+        "/images/upload",
+        data={"title": "Big", "width": "50", "height": "50"},
+        files={"file": ("big.jpg", big_data, "image/jpeg")},
+    )
+    assert response.status_code == 413
+
+
 def test_422__missing_dimensions(client, make_image_file):
     response = client.post(
         "/images/upload",
