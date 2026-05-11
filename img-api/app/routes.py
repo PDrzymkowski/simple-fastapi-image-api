@@ -83,7 +83,7 @@ def list_images(
         query = query.filter(Image.title.ilike(f"%{title}%"))
     total = query.count()
     offset = (page - 1) * size
-    items = query.offset(offset).limit(size).all()
+    items = query.order_by(Image.created_at.desc()).offset(offset).limit(size).all()
     return {
         "items": items,
         "total": total,
