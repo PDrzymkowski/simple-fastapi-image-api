@@ -3,21 +3,14 @@ import uuid
 
 from fastapi import APIRouter, File, Form, UploadFile, Depends, HTTPException, Query
 from sqlalchemy.orm.session import Session
-from PIL import Image as PilImage, UnidentifiedImageError
+from PIL import UnidentifiedImageError
 from .db import get_db
 from .models import Image
 from .schemas import ImageResponse, ImageListResponse
 from .services import upload_image_to_s3
-from .utils import resize_image
+from .utils import resize_image, detect_image_format
 
 router = APIRouter(prefix="/images", tags=["images"])
-SUPPORTED_FORMATS_MAP = {
-    "image/jpeg": "jpeg",
-    "image/png": "png",
-    "image/webp": "webp",
-    "image/gif": "gif",
-}
-
 
 logger = logging.getLogger(__name__)
 
@@ -30,16 +23,17 @@ def upload_image(
     height: int = Form(..., gt=0),
     db: Session = Depends(get_db),
 ):
-    content_type = file.content_type
-    try:
-        extension = SUPPORTED_FORMATS_MAP[content_type]
-    except KeyError:
-        raise HTTPException(status_code=400, detail="Invalid image format")
-
     data = file.file.read()
     try:
+        pil_format, content_type, extension = detect_image_format(data)
+    except UnidentifiedImageError:
+        raise HTTPException(status_code=400, detail="Invalid image data")
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid image format")
+
+    try:
         resized_data, actual_w, actual_h = resize_image(
-            data=data, width=width, height=height, img_format=extension.upper()
+            data=data, width=width, height=height, img_format=pil_format
         )
     except UnidentifiedImageError:
         raise HTTPException(status_code=400, detail="Invalid image data")

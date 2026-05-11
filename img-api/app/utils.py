@@ -1,6 +1,29 @@
 from io import BytesIO
 
-from PIL import Image as PilImage
+from PIL import Image as PilImage, UnidentifiedImageError
+
+SUPPORTED_FORMATS_MAP = {
+    "JPEG": ("image/jpeg", "jpeg"),
+    "PNG": ("image/png", "png"),
+    "WEBP": ("image/webp", "webp"),
+    "GIF": ("image/gif", "gif"),
+}
+
+
+def detect_image_format(data: bytes) -> tuple[str, str, str]:
+    """Detect actual image format from bytes via PIL.
+
+    :param data: Raw image bytes.
+    :return: Tuple of (pil_format, content_type, extension).
+    :raises UnidentifiedImageError: If ``data`` is not a valid image.
+    :raises ValueError: If format is not supported.
+    """
+    with PilImage.open(BytesIO(data)) as img:
+        pil_format = img.format
+    if pil_format not in SUPPORTED_FORMATS_MAP:
+        raise ValueError(f"Unsupported format: {pil_format}")
+    content_type, extension = SUPPORTED_FORMATS_MAP[pil_format]
+    return pil_format, content_type, extension
 
 
 def resize_image(
