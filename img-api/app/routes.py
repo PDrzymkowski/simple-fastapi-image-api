@@ -53,7 +53,9 @@ def upload_image(
         logger.error(f"Failed to upload file to S3: {e}")
         raise HTTPException(status_code=503, detail="Failed to upload file to S3")
     else:
-        image = Image(title=title, key=file_key, url=url, width=width, height=height)
+        image = Image(
+            title=title, key=file_key, url=url, width=actual_w, height=actual_h
+        )
         db.add(image)
         db.commit()
         db.refresh(image)
