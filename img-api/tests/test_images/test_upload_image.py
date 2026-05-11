@@ -1,6 +1,10 @@
+import io
 from unittest.mock import patch
 
+import pytest
+from botocore.exceptions import ClientError
 from fastapi.testclient import TestClient
+from PIL import Image as PilImage
 
 from app.app import app
 from app.db import get_db
@@ -62,6 +66,36 @@ def test_500__s3_cleanup_on_db_failure(db, s3, make_image_file):
         app.dependency_overrides.clear()
 
 
+def test_503__s3_upload_failure(client, make_image_file):
+    with patch("app.routes.upload_image_to_s3", side_effect=ClientError({}, "PutObject")):
+        response = client.post(
+            "/images/upload",
+            data={"title": "S3 fail", "width": "50", "height": "50"},
+            files={"file": ("photo.jpg", make_image_file(), "image/jpeg")},
+        )
+    assert response.status_code == 503
+
+
+@pytest.mark.parametrize(
+    "img_format, content_type, filename",
+    [
+        ("PNG", "image/png", "photo.png"),
+        ("WEBP", "image/webp", "photo.webp"),
+        ("GIF", "image/gif", "photo.gif"),
+    ],
+)
+def test_201__supported_formats(client, img_format, content_type, filename):
+    buf = io.BytesIO()
+    PilImage.new("RGB", (100, 100), color="blue").save(buf, format=img_format)
+    buf.seek(0)
+    response = client.post(
+        "/images/upload",
+        data={"title": "Format test", "width": "50", "height": "50"},
+        files={"file": (filename, buf, content_type)},
+    )
+    assert response.status_code == 201
+
+
 def test_201__happy_path(client, make_image_file):
     response = client.post(
         "/images/upload",
@@ -75,3 +109,16 @@ def test_201__happy_path(client, make_image_file):
     assert body["height"] <= 50
     assert body["url"].startswith("https://")
     assert "id" in body
+
+
+def test_201__stored_dimensions_match_resized_file(client, make_image_file):
+    response = client.post(
+        "/images/upload",
+        data={"title": "Dims check", "width": "40", "height": "30"},
+        files={"file": ("photo.jpg", make_image_file(200, 100), "image/jpeg")},
+    )
+    assert response.status_code == 201
+    body = response.json()
+    assert body["width"] <= 40
+    assert body["height"] <= 30
+    assert body["width"] * 100 // body["height"] == 200 * 100 // 100

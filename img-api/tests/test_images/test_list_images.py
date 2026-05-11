@@ -32,7 +32,6 @@ def test_200__title_filter__no_match(client, sample_image):
 
 
 def test200__pagination(client, make_image_file):
-    # Upload 3 images
     for i in range(3):
         client.post(
             "/images/upload",
@@ -50,3 +49,12 @@ def test200__pagination(client, make_image_file):
 
     response2 = client.get(f"{url}?page=2&size=2")
     assert len(response2.json()["items"]) == 1
+
+
+def test_200__pagination_out_of_range(client, sample_image):
+    response = client.get(f"{url}?page=999&size=20")
+    assert response.status_code == 200
+    body = response.json()
+    assert body["items"] == []
+    assert body["total"] == 1
+    assert body["page"] == 999

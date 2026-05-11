@@ -8,6 +8,11 @@ def test_404__not_found(client):
     assert response.json()["detail"] == f"Image {_id} not found"
 
 
+def test_422__invalid_uuid(client):
+    response = client.get(url.format("not-a-uuid"))
+    assert response.status_code == 422
+
+
 def test_200__happy_path(client, sample_image):
     response = client.get(url.format(sample_image["id"]))
     assert response.status_code == 200
