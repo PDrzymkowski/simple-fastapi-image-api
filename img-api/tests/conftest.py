@@ -38,7 +38,7 @@ def clean_tables(test_db_engine):
 
 @pytest.fixture()
 def db(test_db_engine):
-    Session = sessionmaker(bind=test_db_engine)
+    Session = sessionmaker(test_db_engine)
     session = Session()
     yield session
     session.close()

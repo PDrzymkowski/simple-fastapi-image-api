@@ -2,7 +2,8 @@ import logging
 import uuid
 
 from fastapi import APIRouter, File, Form, UploadFile, Depends, HTTPException, Query
-from sqlalchemy.orm.session import Session
+from sqlalchemy import select, func
+from sqlalchemy.orm import Session
 from PIL import UnidentifiedImageError
 from .db import get_db
 from .models import Image
@@ -82,12 +83,12 @@ def list_images(
     size: int = Query(20, ge=1, le=100),
     db: Session = Depends(get_db),
 ):
-    query = db.query(Image)
+    query = select(Image)
     if title is not None:
-        query = query.filter(Image.title.ilike(f"%{title}%"))
-    total = query.count()
+        query = query.where(Image.title.ilike(f"%{title}%"))
+    total = db.scalar(select(func.count()).select_from(query.subquery()))
     offset = (page - 1) * size
-    items = query.order_by(Image.created_at.desc()).offset(offset).limit(size).all()
+    items = db.scalars(query.order_by(Image.created_at.desc()).offset(offset).limit(size)).all()
     return {
         "items": items,
         "total": total,
