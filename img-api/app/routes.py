@@ -7,7 +7,7 @@ from PIL import UnidentifiedImageError
 from .db import get_db
 from .models import Image
 from .schemas import ImageResponse, ImageListResponse
-from .services import upload_image_to_s3
+from .services import upload_image_to_s3, delete_image_from_s3
 from .utils import resize_image, detect_image_format
 
 router = APIRouter(prefix="/images", tags=["images"])
@@ -46,7 +46,8 @@ def upload_image(
     except Exception as e:
         logger.error(f"Failed to upload file to S3: {e}")
         raise HTTPException(status_code=503, detail="Failed to upload file to S3")
-    else:
+
+    try:
         image = Image(
             title=title, key=file_key, url=url, width=actual_w, height=actual_h
         )
@@ -54,6 +55,10 @@ def upload_image(
         db.commit()
         db.refresh(image)
         return image
+    except Exception as e:
+        logger.error(f"DB commit failed, deleting S3 object {file_key}: {e}")
+        delete_image_from_s3(file_key)
+        raise HTTPException(status_code=500, detail="Failed to save image metadata")
 
 
 @router.get("/{image_id}", response_model=ImageResponse)
