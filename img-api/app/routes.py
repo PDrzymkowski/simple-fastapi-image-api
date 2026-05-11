@@ -12,18 +12,23 @@ from .utils import resize_image, detect_image_format
 
 router = APIRouter(prefix="/images", tags=["images"])
 
+MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024  # 10 MB
+
 logger = logging.getLogger(__name__)
 
 
 @router.post("/upload", status_code=201, response_model=ImageResponse)
 def upload_image(
     file: UploadFile = File(...),
-    title: str = Form(...),
-    width: int = Form(..., gt=0),
-    height: int = Form(..., gt=0),
+    title: str = Form(..., min_length=1, max_length=255),
+    width: int = Form(..., gt=0, le=4096),
+    height: int = Form(..., gt=0, le=4096),
     db: Session = Depends(get_db),
 ):
     data = file.file.read()
+    if len(data) > MAX_FILE_SIZE_BYTES:
+        raise HTTPException(status_code=413, detail="File too large. Max size is 10 MB")
+
     try:
         pil_format, content_type, extension = detect_image_format(data)
     except UnidentifiedImageError:
